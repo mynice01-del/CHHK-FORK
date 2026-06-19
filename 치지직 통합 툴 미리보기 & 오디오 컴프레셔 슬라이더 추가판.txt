@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         치지직 통합 툴: 미리보기 & 오디오 컴프레셔 슬라이더 추가판
+// @name         치지직 통합 툴: 미리보기 & 오디오 컴프레셔 슬라이더 최종판
 // @namespace    http://tampermonkey.net/
-// @version      5.0
-// @description  라이브 미리보기, 고성능 오디오 컴프레셔 + 실시간 게인 조절 슬라이더(1~3배) 및 30초 자동 새로고침
+// @version      5.1
+// @description  라이브 미리보기, 고성능 오디오 컴프레셔 + 실시간 게인 조절 슬라이더 및 30초 자동 새로고침 (저음 완화 반영)
 // @author       You
 // @match        https://chzzk.naver.com/*
 // @require      https://cdn.jsdelivr.net/npm/hls.js@latest
@@ -78,8 +78,13 @@
         const slider = document.getElementById('chzzk-compressor-gain-slider');
 
         if (isCompressorOn) {
-            // 컴프레서 켬: 설정값 적용 및 슬라이더에 지정된 게인값으로 보정
+            // 컴프레서 켬: 모든 설정값을 완벽하게 동기화하여 실시간 적용
             compressorNode.threshold.setValueAtTime(-16, audioCtx.currentTime);
+            compressorNode.knee.setValueAtTime(30, audioCtx.currentTime);
+            compressorNode.ratio.setValueAtTime(6, audioCtx.currentTime);
+            compressorNode.attack.setValueAtTime(0.00, audioCtx.currentTime);
+            compressorNode.release.setValueAtTime(0.1, audioCtx.currentTime);
+            
             gainNode.gain.setValueAtTime(currentGainValue, audioCtx.currentTime);
             if (slider) {
                 slider.disabled = false;
