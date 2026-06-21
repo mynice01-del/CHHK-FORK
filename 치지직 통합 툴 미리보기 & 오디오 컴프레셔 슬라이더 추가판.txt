@@ -84,7 +84,7 @@
             compressorNode.ratio.setValueAtTime(6, audioCtx.currentTime);
             compressorNode.attack.setValueAtTime(0.00, audioCtx.currentTime);
             compressorNode.release.setValueAtTime(0.1, audioCtx.currentTime);
-            
+
             gainNode.gain.setValueAtTime(currentGainValue, audioCtx.currentTime);
             if (slider) {
                 slider.disabled = false;
@@ -107,84 +107,108 @@
 
     // --- UI 로직 (치지직 나이프 및 전용 슬라이더 구조 주입) ---
     function injectCompressorButton() {
-        if (document.getElementById('chzzk-audio-compressor-btn')) return;
+    if (document.getElementById('chzzk-audio-compressor-btn')) return;
 
-        const target = document.querySelector('.pzp-pc__bottom-buttons-left');
-        if (!target) return;
+    const target = document.querySelector('.pzp-pc__bottom-buttons-left');
+    if (!target) return;
 
-        // 버튼과 슬라이더를 감싸는 전체 컨테이너 생성
-        const wrapper = document.createElement('div');
-        wrapper.className = 'pzp-pc__volume-control knife-comp';
-        wrapper.style.display = 'flex';
-        wrapper.style.alignItems = 'center';
-        wrapper.style.gap = '8px';
+    // 버튼과 슬라이더를 감싸는 전체 컨테이너 생성
+    const wrapper = document.createElement('div');
+    wrapper.className = 'pzp-pc__volume-control knife-comp';
+    wrapper.style.display = 'flex';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.gap = '0px'; // 마우스 hover 전에는 간격을 0으로 하여 깔끔하게 숨김
 
-        // 1. 오디오 컴프레서 토글 버튼
-        const btn = document.createElement('button');
-        btn.id = 'chzzk-audio-compressor-btn';
-        btn.className = 'pzp-button pzp-pc__button';
-        btn.style.cssText = "display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 34px !important; width: 34px !important; background: transparent !important; border: none !important; cursor: pointer !important;";
+    // 1. 오디오 컴프레서 토글 버튼
+    const btn = document.createElement('button');
+    btn.id = 'chzzk-audio-compressor-btn';
+    btn.className = 'pzp-button pzp-pc__button';
+    btn.style.cssText = "display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 34px !important; width: 34px !important; background: transparent !important; border: none !important; cursor: pointer !important; z-index: 2;";
 
-        btn.innerHTML = `
-            <span class="pzp-ui-icon">
-                <svg id="compressor-icon" style="opacity: 0.5; transition: 0.2s;" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 10v4M6 6v12M11 3v18M16 8v8M21 11v2"></path>
-                </svg>
-            </span>
-            <span class="pzp-button__tooltip pzp-button__tooltip--top">오디오 컴프레서</span>
-        `;
-        btn.onclick = () => toggleCompressor(btn);
-        wrapper.appendChild(btn);
+    btn.innerHTML = `
+        <span class="pzp-ui-icon">
+            <svg id="compressor-icon" style="opacity: 0.5; transition: 0.2s;" width="22" height="25" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10v4M6 6v12M11 3v18M16 8v8M21 11v2"></path>
+            </svg>
+        </span>
+        <span class="pzp-button__tooltip pzp-button__tooltip--top">오디오 컴프레서</span>
+    `;
+    btn.onclick = () => toggleCompressor(btn);
+    wrapper.appendChild(btn);
 
-        // 2. 치지직 UI 스타일을 차용한 게인 조절 슬라이더 영역
-        const sliderContainer = document.createElement('div');
-        sliderContainer.className = 'pzp-pc__volume-slider pzp-ui-slider--volume knife-gain-slider';
-        sliderContainer.style.cssText = "display: flex; align-items: center; width: 80px; height: 34px; position: relative;";
+    // 2. 치지직 UI 스타일을 차용한 게인 조절 슬라이더 영역
+    const sliderContainer = document.createElement('div');
+    sliderContainer.className = 'pzp-pc__volume-slider pzp-ui-slider--volume knife-gain-slider';
 
-        const slider = document.createElement('input');
-        slider.id = 'chzzk-compressor-gain-slider';
-        slider.type = 'range';
-        slider.min = '1.0';
-        slider.max = '3.0';
-        slider.step = '0.1';
-        slider.value = currentGainValue.toString();
-        slider.disabled = !isCompressorOn; // 초기 상태에 맞춰 활성화 여부 결정
-        slider.style.cssText = `
-            width: 100%;
-            height: 6px;
-            cursor: pointer;
-            accent-color: #00ffaa;
-            opacity: ${isCompressorOn ? '1.0' : '0.3'};
-            transition: opacity 0.2s;
-        `;
+    // 기본 상태: width를 0으로, 투명도를 0으로 숨겨둡니다. overflow: hidden 필수!
+    sliderContainer.style.cssText = `
+        display: flex;
+        align-items: center;
+        width: 0px;
+        height: 34px;
+        position: relative;
+        overflow: hidden;
+        opacity: 0;
+        transition: width 0.2s ease, opacity 0.2s ease, margin-left 0.2s ease;
+    `;
 
-        // 슬라이더 툴팁 구현
-        const tooltip = document.createElement('span');
-        tooltip.className = 'pzp-button__tooltip pzp-button__tooltip--top';
-        tooltip.innerText = `게인 보정: ${currentGainValue}x`;
-        sliderContainer.appendChild(tooltip);
+    const slider = document.createElement('input');
+    slider.id = 'chzzk-compressor-gain-slider';
+    slider.type = 'range';
+    slider.min = '1.0';
+    slider.max = '3.0';
+    slider.step = '0.1';
+    slider.value = currentGainValue.toString();
+    slider.disabled = !isCompressorOn;
+    slider.style.cssText = `
+        width: 80px; /* 슬라이더 자체의 고정 너비 지정 */
+        height: 6px;
+        cursor: pointer;
+        accent-color: #00ffaa;
+        opacity: ${isCompressorOn ? '1.0' : '0.3'};
+        transition: opacity 0.2s;
+    `;
 
-        // 슬라이더 이벤트 바인딩 (드래그 시 실시간 게인 노드 값 변경)
-        slider.oninput = (e) => {
-            currentGainValue = parseFloat(e.target.value);
-            tooltip.innerText = `게인 보정: ${currentGainValue.toFixed(1)}x`;
+    // 슬라이더 툴팁 구현
+    const tooltip = document.createElement('span');
+    tooltip.className = 'pzp-button__tooltip pzp-button__tooltip--top';
+    tooltip.innerText = `게인 보정: ${currentGainValue}x`;
+    sliderContainer.appendChild(tooltip);
 
-            if (isCompressorOn && gainNode) {
-                gainNode.gain.setValueAtTime(currentGainValue, audioCtx.currentTime);
-            }
-        };
+    // 슬라이더 이벤트 바인딩
+    slider.oninput = (e) => {
+        currentGainValue = parseFloat(e.target.value);
+        tooltip.innerText = `게인 보정: ${currentGainValue.toFixed(1)}x`;
 
-        sliderContainer.appendChild(slider);
-        wrapper.appendChild(sliderContainer);
-
-        // 치지직 오리지널 볼륨 컨트롤러 바로 뒤에 배치
-        const vol = target.querySelector('.pzp-pc__volume-control');
-        if (vol) {
-            vol.after(wrapper);
-        } else {
-            target.appendChild(wrapper);
+        if (isCompressorOn && gainNode) {
+            gainNode.gain.setValueAtTime(currentGainValue, audioCtx.currentTime);
         }
+    };
+
+    sliderContainer.appendChild(slider);
+    wrapper.appendChild(sliderContainer);
+
+    // --- 핵심: 마우스 마우스 진입/이탈(Hover) 이벤트 바인딩 ---
+    wrapper.onmouseenter = () => {
+        sliderContainer.style.width = '80px';    // 슬라이더 영역 확장
+        sliderContainer.style.marginLeft = '8px'; // 버튼과의 간격 확보
+        sliderContainer.style.opacity = '1';      // 투명도 복구
+    };
+
+    wrapper.onmouseleave = () => {
+        sliderContainer.style.width = '0px';
+        sliderContainer.style.marginLeft = '0px';
+        sliderContainer.style.opacity = '0';
+    };
+
+    // 치지직 오리지널 볼륨 컨트롤러 바로 뒤에 배치
+    const vol = target.querySelector('.pzp-pc__volume-control');
+    if (vol) {
+        vol.after(wrapper);
+    } else {
+        target.appendChild(wrapper);
     }
+}
 
     // --- 미리보기 로직 ---
     const previewContainer = document.createElement('div');
