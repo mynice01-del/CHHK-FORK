@@ -249,13 +249,13 @@
         previewContainer.style.display = 'block';
     }
 
-    // 캡처 단계에서 이벤트 감지 및 처리
+ // 1. [기존] 캡처 단계에서 이벤트 감지 및 처리 (마우스 진입)
     document.addEventListener('pointerenter', (e) => {
         if (!e.target || typeof e.target.closest !== 'function') return;
 
         const linkElem = e.target.closest('a[href*="/live/"]');
 
-        // [수정] 마우스가 올라간 링크가 메인 화면 리스트(list_tsisc) 내부에 있다면 미리보기 무시
+        // 메인 화면 리스트(list_tsisc) 내부에 있다면 미리보기 무시
         if (linkElem?.closest('ul[class*="list_tsisc"]')) return;
 
         const sidebarItem = linkElem?.closest('li');
@@ -266,6 +266,7 @@
         hoverTimeout = setTimeout(() => showPreview(sidebarItem, channelId, previewContainer, previewVideo), 250);
     }, true);
 
+    // 2. [기존] 마우스가 썸네일을 이탈할 때 미리보기 끄기
     document.addEventListener('pointerleave', (e) => {
         if (!e.target || typeof e.target.closest !== 'function') return;
 
@@ -275,6 +276,19 @@
             currentChannel = null;
             currentPreviewUrl = null;
             abortController?.abort();
+        }
+    }, true);
+
+    // 3. [추가] 썸네일을 클릭하는 순간(방으로 들어갈 때) 미리보기 강제 즉시 삭제
+    document.addEventListener('pointerdown', (e) => {
+        if (!e.target || typeof e.target.closest !== 'function') return;
+
+        if (e.target.closest('a[href*="/live/"]')) {
+            clearTimeout(hoverTimeout);
+            previewContainer.style.display = 'none'; // 눈 앞에서 즉시 숨김
+            currentChannel = null;
+            currentPreviewUrl = null;
+            abortController?.abort();                // 데이터 요청 즉시 중단
         }
     }, true);
 
