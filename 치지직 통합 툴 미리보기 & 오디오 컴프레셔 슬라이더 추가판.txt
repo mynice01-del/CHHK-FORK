@@ -250,8 +250,8 @@
         hls.loadSource(streamUrl);
 
         const rect = sidebarItem.getBoundingClientRect();
-        previewContainer.style.top = `${Math.max(10, Math.min(rect.top, window.innerHeight - 170))}px`;
-        previewContainer.style.left = `${rect.right + 15}px`;
+        previewContainer.style.top = `${Math.max(10, Math.min(rect.top + -160, window.innerHeight - 170))}px`;
+        previewContainer.style.left = `${rect.right + 5}px`;
         previewContainer.style.display = 'block';
     }
 
